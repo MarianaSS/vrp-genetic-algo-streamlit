@@ -1,0 +1,5 @@
+streamlit
+pandas
+matplotlib
+pyyaml>=6.0
+openai>=1.50.0

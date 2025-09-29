@@ -1,0 +1,5 @@
+num_clients: 30
+capacity_per_vehicle: 100
+num_vehicles: 3
+max_autonomy: 200
+random_seed: 42
