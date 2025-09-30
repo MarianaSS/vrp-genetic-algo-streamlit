@@ -40,12 +40,14 @@ def show_instance_loader():
     return st.session_state.get("df")
 
 def create_plot_placeholders():
-    """Cria placeholders e figuras para plotar no loop de gerações."""
-    plot_placeholder1 = st.empty()
-    plot_placeholder2 = st.empty()
-    fig1, ax1 = plt.subplots(figsize=(6, 4))
-    fig2, ax2 = plt.subplots(figsize=(6, 4))
+    col1, col2 = st.columns(2)  # duas colunas lado a lado
+    with col1:
+        plot_placeholder1 = st.empty()
+    with col2:
+        plot_placeholder2 = st.empty()
 
+    fig1, ax1 = plt.subplots(figsize=(5, 4))
+    fig2, ax2 = plt.subplots(figsize=(5, 4))
 
     plot_placeholders = {"p1": plot_placeholder1, "p2": plot_placeholder2}
     figs_axes = (fig1, ax1, fig2, ax2)

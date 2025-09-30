@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from services.ga_runner import run_ga_and_build_report
 from utils.ui_helpers import show_instance_loader, create_plot_placeholders
 
+st.set_page_config(layout="wide")
+
 def render_main_ui():
     st.title("Otimização de Rotas com Algoritmo Genético (VRP)")
 
