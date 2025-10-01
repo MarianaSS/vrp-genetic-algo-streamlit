@@ -116,6 +116,22 @@ def render_main_ui():
             figs_axes=figs_axes,
         )
 
+        st.subheader("Métricas da Execução")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("Distância total", f"{result['total_distance']:.2f}")
+            st.metric("Tempo de execução", f"{result['execution_time']:.2f} s")
+            st.metric("Convergência em", f"{result['convergence_gen']} gerações")
+
+        with col2:
+            if result["brute_force_cost"]:
+                st.metric("Custo ótimo (brute force)", f"{result['brute_force_cost']:.2f}")
+                st.metric("GAP (%)", f"{result['gap']:.2f} %")
+            else:
+                st.info("Brute force só disponível para ≤10 pontos.")
+
         # Resultado contém best_solution, fitness_evolution, df_routes, run_dict, total_distance
         best_solution = result.get("best_solution")
         fitness_evolution = result.get("fitness_evolution")

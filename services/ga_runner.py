@@ -7,6 +7,25 @@ from utils.geometry import euclidean_distance
 from utils.vehicle_summary import generate_vehicle_summary
 from reporting.llm_reporter import generate_driver_report
 from utils.score_logger import append_score
+import time
+import itertools
+from utils.geometry import euclidean_distance
+
+def brute_force_tsp(coords, depot=(0.0, 0.0)):
+    """Resolve TSP com brute force para instâncias pequenas (<=10 pontos)."""
+    if len(coords) > 10:
+        return None, None
+    best_cost = float("inf")
+    best_route = None
+    for perm in itertools.permutations(coords):
+        dist = euclidean_distance(depot, perm[0])
+        for a, b in zip(perm, perm[1:]):
+            dist += euclidean_distance(a, b)
+        dist += euclidean_distance(perm[-1], depot)
+        if dist < best_cost:
+            best_cost = dist
+            best_route = perm
+    return best_cost, best_route
 
 def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholders, figs_axes):
     """
@@ -16,6 +35,7 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
     - plot_placeholders: {'p1': placeholder1, 'p2': placeholder2}
     - figs_axes: (fig1, ax1, fig2, ax2)
     """
+    start = time.time()
     fig1, ax1, fig2, ax2 = figs_axes
     plot_p1 = plot_placeholders.get("p1")
     plot_p2 = plot_placeholders.get("p2")
@@ -63,7 +83,9 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
         on_generation=on_generation,
     )
 
-        # calcula total_distance
+    execution_time = time.time() - start
+
+    # calcula total_distance
     def route_distance(route, depot):
             if not route:
                 return 0.0
@@ -74,7 +96,6 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
             return dist
         
     total_distance = sum(route_distance(r, params["depot"]) for r in best_solution)
-
     demand_map = {tuple(c): float(d) for c, d in zip(coords, demands)}
 
     df_routes = generate_vehicle_summary(
@@ -101,13 +122,11 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
             ],
         })
 
-
     # gera relatório
     try:
         relatorio = generate_driver_report(run_dict)
     except Exception:
         relatorio = ""
-
 
     # persiste score
     try:
@@ -133,6 +152,21 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
     except Exception:
         pass
 
+    # calcula em qual geração houve convergência (primeira vez que o melhor fitness final apareceu)
+    convergence_gen = len(fitness_evolution)
+    if fitness_evolution:
+        best_final = fitness_evolution[-1]
+        for i in range(1, len(fitness_evolution)):
+            if fitness_evolution[i] == best_final:
+                convergence_gen = i
+                break
+
+    # calcula gap entre a solução e brute force e a ga
+    brute_force_cost, _ = brute_force_tsp(coords)
+    gap = None
+    if brute_force_cost:
+        gap = 100 * (total_distance - brute_force_cost) / brute_force_cost
+
     return {
         "best_solution": best_solution,
         "fitness_evolution": fitness_evolution,
@@ -140,4 +174,8 @@ def run_ga_and_build_report(coords, priorities, demands, params, plot_placeholde
         "run_dict": run_dict,
         "total_distance": total_distance,
         "relatorio": relatorio,
+        "execution_time": execution_time,
+        "convergence_gen": convergence_gen,
+        "brute_force_cost": brute_force_cost,
+        "gap": gap,
     }
