@@ -68,6 +68,8 @@ streamlit run main_app.py
 
 ## ☁️ Deploy online
 
+Acesse: https://vrp-genetic-algo-app.streamlit.app/
+
 ---
 
 ## 🧠 Licença
