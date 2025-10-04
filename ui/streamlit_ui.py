@@ -141,6 +141,63 @@ def render_main_ui():
     except Exception as e:
         st.error(f"Erro na execução do algoritmo: {e}")
 
+
+    # --- Relatório Gerado pela IA (LLM) ---
+    from reporting.llm_reporter import generate_driver_report
+    import io
+
+    st.subheader("Relatório Gerado pela IA")
+
+    # inicializa estado
+    if "llm_report" not in st.session_state:
+        st.session_state["llm_report"] = None
+
+    report_placeholder = st.empty()  # local fixo
+
+    with report_placeholder.container():
+        if st.session_state["llm_report"]:
+            with st.expander("Exibir relatório completo", expanded=True):
+                st.markdown(st.session_state["llm_report"])
+
+            # botão de download do relatório
+            buffer = io.BytesIO(st.session_state["llm_report"].encode("utf-8"))
+            st.download_button(
+                label="⬇️ Baixar relatório",
+                data=buffer,
+                file_name="relatorio_IA.txt",
+                mime="text/plain",
+                key="download_llm_report",
+            )
+        else:
+            st.info("Nenhum relatório disponível. Clique abaixo para gerar.")
+
+        # botão de geração de relatório com IA
+        if st.button("Gerar / Regenerar Relatório IA", key="generate_llm_report_btn"):
+            try:
+                with st.spinner("Gerando relatório com a IA..."):
+                    llm_report = generate_driver_report(st.session_state.get("run_dict", {}))
+                    st.session_state["llm_report"] = llm_report
+
+                    # atualiza o bloco visual
+                    report_placeholder.empty()
+                    with report_placeholder.container():
+                        with st.expander("Exibir relatório completo", expanded=True):
+                            st.markdown(llm_report)
+
+                        buffer = io.BytesIO(llm_report.encode("utf-8"))
+                        st.download_button(
+                            label="⬇️ Baixar relatório",
+                            data=buffer,
+                            file_name="relatorio_IA.txt",
+                            mime="text/plain",
+                            key="download_llm_report_refreshed",
+                        )
+
+                    st.success("Relatório gerado com sucesso!")
+            except Exception as e:
+                st.error(f"Erro ao gerar relatório: {e}")
+
+
     # --- Histórico de Execuções ---
     # Mostra tabela com resultados anteriores e botão para limpar
     from utils.score_logger import load_scores, clear_scores

@@ -63,7 +63,7 @@ def show_instance_loader():
                 st.error(f"Erro: {e}")
 
         st.markdown("---")
-        st.markdown("### 📂 Ou carregue uma instância existente")
+        st.markdown("### Ou carregue uma instância existente")
         uploaded_file = st.file_uploader(
             "Selecione um arquivo CSV de instância:", type="csv"
         )
