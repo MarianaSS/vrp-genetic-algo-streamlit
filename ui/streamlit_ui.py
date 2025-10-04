@@ -12,7 +12,7 @@ from utils.ui_helpers import show_instance_loader, create_plot_placeholders
 st.set_page_config(layout="wide")
 
 def render_main_ui():
-    st.title("Otimização de Rotas com Algoritmo Genético (VRP)")
+    st.title("LogGen - Otimização de Rotas com Algoritmo Genético")
 
     # Loader / generator de instância
     df = show_instance_loader()
@@ -25,7 +25,7 @@ def render_main_ui():
         st.error(f"CSV inválido. As colunas obrigatórias são: {required_columns}")
         return
     
-    st.success("Instância carregada com sucesso ✅")
+    st.success("Instância carregada com sucesso.")
     st.dataframe(df.head())
 
     coords = list(zip(df["x"], df["y"]))
@@ -50,10 +50,8 @@ def render_main_ui():
     balance_load_weight = st.sidebar.slider("Peso balanceamento de carga", 0.0, 20.0, 0.0)
     balance_distance_weight = st.sidebar.slider("Peso balanceamento de distância", 0.0, 20.0, 0.0)
 
-
     st.sidebar.header("Prioridade mais cedo")
     priority_lateness_weight = st.sidebar.slider("Peso de atraso para prioridade alta", 0.0, 20.0, 0.0)
-
 
     st.sidebar.header("Limite de paradas")
     max_stops_per_vehicle = st.sidebar.number_input("Max paradas por veículo", min_value=1, value=10)
@@ -97,14 +95,15 @@ def render_main_ui():
 
     # Executa serviço que roda o GA e monta relatórios
     try:
-        result = run_ga_and_build_report(
-            coords=coords,
-            priorities=priorities,
-            demands=demands,
-            params=params,
-            plot_placeholders=plot_placeholders,
-            figs_axes=figs_axes,
-        )
+        with st.spinner("Executando o algoritmo genético... Gerando relatórios..."):
+            result = run_ga_and_build_report(
+                coords=coords,
+                priorities=priorities,
+                demands=demands,
+                params=params,
+                plot_placeholders=plot_placeholders,
+                figs_axes=figs_axes,
+            )
 
         st.subheader("Métricas da Execução")
 
@@ -118,7 +117,7 @@ def render_main_ui():
         with col2:
             if result["brute_force_cost"]:
                 st.metric("Custo ótimo (brute force)", f"{result['brute_force_cost']:.2f}")
-                st.metric("GAP (%)", f"{result['gap']:.2f} %")
+                st.metric("Gap comparado a solução ótima (%)", f"{result['gap']:.2f} %")
             else:
                 st.info("Brute force só disponível para ≤10 pontos.")
 
