@@ -14,16 +14,6 @@ st.set_page_config(layout="wide")
 def render_main_ui():
     st.title("Otimização de Rotas com Algoritmo Genético (VRP)")
 
-    # Limpar histórico
-    if st.button("🧹 Limpar histórico"):
-        try:
-            from utils.score_logger import clear_scores
-            clear_scores()
-            st.success("Histórico limpo!")
-            st.experimental_rerun()
-        except Exception as e:
-            st.error(f"Erro ao limpar histórico: {e}")
-
     # Loader / generator de instância
     df = show_instance_loader()
     if df is None:
@@ -149,11 +139,33 @@ def render_main_ui():
         st.subheader("Resumo por Veículo")
         st.dataframe(df_routes)
 
-        # Histórico
-        from utils.score_logger import load_scores
-        st.subheader("Histórico de Execuções")
-        score_df = load_scores()
-        st.dataframe(score_df)
-
     except Exception as e:
         st.error(f"Erro na execução do algoritmo: {e}")
+
+    # --- Histórico de Execuções ---
+    # Mostra tabela com resultados anteriores e botão para limpar
+    from utils.score_logger import load_scores, clear_scores
+
+    st.subheader("Histórico de Execuções")
+
+    # estado local do histórico
+    if "score_df" not in st.session_state:
+        st.session_state["score_df"] = load_scores()
+
+    placeholder = st.empty()  # local fixo na tela
+
+    with placeholder.container():
+        st.dataframe(st.session_state["score_df"])
+
+    # botão para limpar o histórico
+    if st.button("Limpar histórico"):
+        try:
+            clear_scores()
+            st.session_state["score_df"] = load_scores()  # recarrega vazio
+            placeholder.empty()                           # limpa conteúdo antigo
+            with placeholder.container():
+                st.dataframe(st.session_state["score_df"])
+            st.success("Histórico limpo!")
+        except Exception as e:
+            st.error(f"Erro ao limpar histórico: {e}")
+
