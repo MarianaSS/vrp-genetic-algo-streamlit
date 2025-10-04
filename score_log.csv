@@ -1,0 +1,2 @@
+execucao,melhor_distancia,n_generations,pop_size,mutation_prob,elitism,max_capacity,penalty_weight,n_vehicles,max_autonomy,autonomy_penalty_weight,depot_x,depot_y,balance_load_weight,balance_distance_weight,priority_lateness_weight,max_stops_per_vehicle,stop_penalty_weight
+1.0,641.0963158981563,150.0,60.0,0.2,4.0,100.0,3.0,3.0,200.0,3.0,0.0,0.0,0.0,0.0,0.0,10.0,5.0

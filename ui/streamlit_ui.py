@@ -3,21 +3,29 @@ UI do Streamlit. Responsável por montar a interface, coletar parâmetros
 e chamar o serviço que executa o GA.
 """
 import streamlit as st
-import pandas as pd
-import matplotlib.pyplot as plt
+import io
 
 from services.ga_runner import run_ga_and_build_report
 from utils.ui_helpers import show_instance_loader, create_plot_placeholders
+from reporting.llm_reporter import generate_driver_report
+from utils.score_logger import load_scores, clear_scores
 
 st.set_page_config(layout="wide")
 
 def render_main_ui():
     st.title("LogGen - Otimização de Rotas com Algoritmo Genético")
 
-    # Loader / generator de instância
+    # Loader / gerador de instância
     df = show_instance_loader()
     if df is None:
         return
+    
+    # --- Opção para gerar relatório por IA ---
+    generate_llm_report_flag = st.checkbox(
+        "Gerar relatório com IA após a execução",
+        value=False,
+        help="Se marcado, o relatório será gerado automaticamente ao final da execução."
+    )
     
     # Valida colunas
     required_columns = {"x", "y", "priority", "demand"}
@@ -143,65 +151,30 @@ def render_main_ui():
 
 
     # --- Relatório Gerado pela IA (LLM) ---
-    from reporting.llm_reporter import generate_driver_report
-    import io
-
-    st.subheader("Relatório Gerado pela IA")
-
-    # inicializa estado
-    if "llm_report" not in st.session_state:
-        st.session_state["llm_report"] = None
-
-    report_placeholder = st.empty()  # local fixo
-
-    with report_placeholder.container():
-        if st.session_state["llm_report"]:
-            with st.expander("Exibir relatório completo", expanded=True):
+    if generate_llm_report_flag:
+        try:
+            with st.spinner("Gerando relatório com a IA..."):
+                llm_report = generate_driver_report(st.session_state.get("run_dict", {}))
+                st.session_state["llm_report"] = llm_report
+            st.success("Relatório da IA gerado com sucesso!")
+            with st.expander("Exibir relatório da IA", expanded=False):
                 st.markdown(st.session_state["llm_report"])
-
-            # botão de download do relatório
-            buffer = io.BytesIO(st.session_state["llm_report"].encode("utf-8"))
-            st.download_button(
-                label="⬇️ Baixar relatório",
-                data=buffer,
-                file_name="relatorio_IA.txt",
-                mime="text/plain",
-                key="download_llm_report",
-            )
-        else:
-            st.info("Nenhum relatório disponível. Clique abaixo para gerar.")
-
-        # botão de geração de relatório com IA
-        if st.button("Gerar / Regenerar Relatório IA", key="generate_llm_report_btn"):
-            try:
-                with st.spinner("Gerando relatório com a IA..."):
-                    llm_report = generate_driver_report(st.session_state.get("run_dict", {}))
-                    st.session_state["llm_report"] = llm_report
-
-                    # atualiza o bloco visual
-                    report_placeholder.empty()
-                    with report_placeholder.container():
-                        with st.expander("Exibir relatório completo", expanded=True):
-                            st.markdown(llm_report)
-
-                        buffer = io.BytesIO(llm_report.encode("utf-8"))
-                        st.download_button(
-                            label="⬇️ Baixar relatório",
-                            data=buffer,
-                            file_name="relatorio_IA.txt",
-                            mime="text/plain",
-                            key="download_llm_report_refreshed",
-                        )
-
-                    st.success("Relatório gerado com sucesso!")
-            except Exception as e:
-                st.error(f"Erro ao gerar relatório: {e}")
+                buffer = io.BytesIO(st.session_state["llm_report"].encode("utf-8"))
+                st.download_button(
+                    label="⬇️ Baixar relatório",
+                    data=buffer,
+                    file_name="relatorio_IA.txt",
+                    mime="text/plain",
+                    key="download_llm_report_auto",
+                )
+        except Exception as e:
+            st.error(f"Erro ao gerar relatório da IA: {e}")
+    else:
+        st.info("Geração automática de relatório por IA está desativada.")
 
 
     # --- Histórico de Execuções ---
     # Mostra tabela com resultados anteriores e botão para limpar
-    from utils.score_logger import load_scores, clear_scores
-
     st.subheader("Histórico de Execuções")
 
     # estado local do histórico
