@@ -20,13 +20,6 @@ def render_main_ui():
     if df is None:
         return
     
-    # --- Opção para gerar relatório por IA ---
-    generate_llm_report_flag = st.checkbox(
-        "Gerar relatório com IA após a execução",
-        value=False,
-        help="Se marcado, o relatório será gerado automaticamente ao final da execução."
-    )
-    
     # Valida colunas
     required_columns = {"x", "y", "priority", "demand"}
     if not required_columns.issubset(df.columns):
@@ -42,6 +35,11 @@ def render_main_ui():
 
     # Sidebar parâmetros
     st.sidebar.header("Parâmetros do Algoritmo")
+    generate_llm_report_flag = st.sidebar.checkbox(
+        "Gerar relatório com IA após a execução",
+        value=False,
+        help="Se marcado, o relatório será gerado automaticamente ao final da execução."
+    )
     n_generations = st.sidebar.slider("Número de gerações", 10, 500, 150)
     pop_size = st.sidebar.slider("Tamanho da população", 10, 200, 60)
     mutation_prob = st.sidebar.slider("Probabilidade de mutação", 0.0, 1.0, 0.2)
